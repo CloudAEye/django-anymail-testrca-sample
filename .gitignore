@@ -1,0 +1,19 @@
+.DS_Store
+._*
+*.pyc
+*.egg
+*.egg-info
+.eggs/
+.tox/
+build/
+dist/
+docs/_build/
+local.py
+
+# Because pipenv was only used to manage a local development
+# environment, it was not helpful to track its lock file
+Pipfile.lock
+
+# Use pyenv-virtualenv to manage a venv for local development
+.python-version
+.idea
