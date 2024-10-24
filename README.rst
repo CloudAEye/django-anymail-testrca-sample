@@ -18,7 +18,7 @@ Anymail: Django email integration for transactional ESPs (Clone)
 
 .. This shared-intro section is also included in docs/index.rst
 
-Fork Credits: This project is a clone of the official django plugin [django-anymail](https://github.com/anymail/django-anymail)
+Fork Credits: This project is a clone of the official django plugin `django-anymail <https://github.com/anymail/django-anymail>`_
 
 Anymail lets you send and receive email in Django using your choice
 of transactional email service providers (ESPs). It extends the
