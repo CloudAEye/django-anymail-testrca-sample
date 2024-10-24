@@ -26,20 +26,21 @@ standard `django.core.mail` with many common ESP-added features, providing
 a consistent API that avoids locking your code to one specific ESP
 (and making it easier to change ESPs later if needed).
 
-## Run on local
+Run on local
+------------
 
-## Install Dependencies
+**Install Dependencies**
 
 Run the below command to install dependencies
 
-```shell
-python -m pip install -r requirements.txt
-```
+.. code-block:: console
 
-## Run Tests
+        $ python -m pip install -r requirements.txt
+
+**Run Tests**
 
 Run the below command to run tests
 
-```shell
-python runtests.py
-```
+.. code-block:: console
+
+        $ python runtests.py
