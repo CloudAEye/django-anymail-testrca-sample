@@ -98,6 +98,13 @@ class EmailBackend(AnymailBaseBackend):
             return AmazonSESV2SendBulkEmailPayload(message, defaults, self)
         else:
             return AmazonSESV2SendEmailPayload(message, defaults, self)
+    def build_ses_payload(self, message, defaults):
+        if getattr(message, "payload_id", UNSET) is not UNSET:
+            return AmazonSESV2SendBulkEmailPayload(message, defaults, self)
+        else:
+            raise NotImplementedError(
+                f"{self.client!r} Payload id is not set."
+            ) from None
 
     def post_to_esp(self, payload, message):
         payload.finalize_payload()
@@ -122,6 +129,9 @@ class EmailBackend(AnymailBaseBackend):
         return response
 
     def parse_recipient_status(self, response, payload, message):
+        """
+        Parses the recipient status from the response
+        """
         return payload.parse_recipient_status(response)
 
 
@@ -154,6 +164,7 @@ class AmazonSESV2SendEmailPayload(AmazonSESBasePayload):
         super().init_payload()
         self.all_recipients = []  # for parse_recipient_status
         self.mime_message = self.message.message()
+        print(self.mime_message)
 
     def finalize_payload(self):
         # (The boto3 SES client handles base64 encoding raw_message.)
