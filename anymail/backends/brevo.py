@@ -136,7 +136,7 @@ class BrevoPayload(RequestsPayload):
         return email_object
 
     def set_from_email(self, email):
-        self.data["sender"] = self.email_object(email)
+        self.data["from"] = self.email_object(email)
 
     def set_recipients(self, recipient_type, emails):
         assert recipient_type in ["to", "cc", "bcc"]
