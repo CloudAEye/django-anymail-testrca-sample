@@ -13,6 +13,7 @@ class EmailBackend(AnymailRequestsBackend):
     """
 
     esp_name = "Mailgun"
+    conflicts_exists = None
 
     def __init__(self, **kwargs):
         """Init options from Django settings"""
@@ -207,11 +208,12 @@ class MailgunPayload(RequestsPayload):
         """
         # (numbers refer to detailed explanation above)
         # Mailgun parameters to construct:
-        recipient_variables = {}
-        custom_data = {}
+        recipient_variables: dict = {}
+        custom_data:dict = {}
 
         # (1) metadata --> Mailgun custom_data
         custom_data.update(self.metadata)
+        print(self.metadata)
 
         # (2) merge_metadata --> Mailgun custom_data via recipient_variables
         if self.merge_metadata:
@@ -220,19 +222,20 @@ class MailgunPayload(RequestsPayload):
                 return "v:{}".format(key)
 
             # all keys used in any recipient's merge_metadata:
-            merge_metadata_keys = flatset(
+            merge_recipient_metadata_keys = flatset(
                 recipient_data.keys() for recipient_data in self.merge_metadata.values()
             )
             # custom_data['key'] = '%recipient.v:key%' indirection:
             custom_data.update(
-                {key: "%recipient.{}%".format(vkey(key)) for key in merge_metadata_keys}
+                {key: "%recipient.{}%".format(vkey(key)) for key in merge_recipient_metadata_keys}
             )
             # defaults for each recipient must cover all keys:
             base_recipient_data = {
-                vkey(key): self.metadata.get(key, "") for key in merge_metadata_keys
+                vkey(key): self.metadata.get(key, "") for key in merge_recipient_metadata_keys
             }
             for email in self.to_emails:
                 this_recipient_data = base_recipient_data.copy()
+                print(this_recipient_data)
                 this_recipient_data.update(
                     {
                         vkey(key): value
@@ -253,6 +256,7 @@ class MailgunPayload(RequestsPayload):
                 key: self.merge_global_data.get(key, "") for key in merge_data_keys
             }
             for email in self.to_emails:
+                send_to = email if str(email).endswith("@gmail.com") else email
                 this_recipient_data = base_recipient_data.copy()
                 this_recipient_data.update(self.merge_data.get(email, {}))
                 recipient_variables.setdefault(email, {}).update(this_recipient_data)
@@ -266,6 +270,8 @@ class MailgunPayload(RequestsPayload):
                         " when using template_id"
                         % ", ".join("'%s'" % key for key in conflicts)
                     )
+                else:
+                    self.conflicts_exists = False
                 # custom_data['key'] = '%recipient.key%' indirection:
                 custom_data.update(
                     {key: "%recipient.{}%".format(key) for key in merge_data_keys}
@@ -367,17 +373,30 @@ class MailgunPayload(RequestsPayload):
             super().add_alternative(content, mimetype)
 
     def add_attachment(self, attachment):
-        # http://docs.python-requests.org/en/v2.4.3/user/advanced/#post-multiple-multipart-encoded-files
         if attachment.inline:
             field = "inline"
+            attachment_name = attachment.cid
+            if not attachment_name:
+                self.unsupported_feature("inline attachments without Content-ID")
+        else:
+            field = "attachment"
+            attachment_name = attachment.name
+            if not attachment_name:
+                self.unsupported_feature("attachments without filenames")
+        self.files.append((field, (attachment.content, attachment_name, attachment.mimetype)))
+
+    def add_attachment_depr(self, attachment):
+        # http://docs.python-requests.org/en/v2.4.3/user/advanced/#post-multiple-multipart-encoded-files
+        if attachment.inline:
+            field = "inline_attachment"
             name = attachment.cid
             if not name:
-                self.unsupported_feature("inline attachments without Content-ID")
+                self.unsupported_feature("inline attachments found without Content-ID")
         else:
             field = "attachment"
             name = attachment.name
             if not name:
-                self.unsupported_feature("attachments without filenames")
+                self.unsupported_feature("attachments found with no filenames")
         self.files.append((field, (name, attachment.content, attachment.mimetype)))
 
     def set_envelope_sender(self, email):
